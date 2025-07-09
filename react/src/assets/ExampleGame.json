@@ -1,0 +1,103 @@
+[
+    {
+      "game_id": 1,
+      "name": "Example Game",
+      "developer": "Example Developer",
+      "publisher": "Example Publisher",
+      "positive": 95,
+      "negative": 5,
+      "owners": 1000000,
+      "initialPrice": 59.99,
+      "discount": 0.2,
+      "languages": ["English", "Spanish", "French"],
+      "genre": "Action",
+      "price": 47.99,
+      "ccu": 5000,
+      "tags": {
+        "Multiplayer": 100,
+        "Indie": 200,
+        "Open World": 300
+      }
+    },
+    {
+      "game_id": 2,
+      "name": "Adventure Quest",
+      "developer": "Quest Studios",
+      "publisher": "Adventure Corp",
+      "positive": 88,
+      "negative": 12,
+      "owners": 500000,
+      "initialPrice": 39.99,
+      "discount": 0.15,
+      "languages": ["English", "German"],
+      "genre": "Adventure",
+      "price": 33.99,
+      "ccu": 3000,
+      "tags": {
+        "Single Player": 150,
+        "Story Rich": 250,
+        "Fantasy": 350
+      }
+    },
+    {
+      "game_id": 3,
+      "name": "Racing Rivals",
+      "developer": "SpeedWorks",
+      "publisher": "RacePro",
+      "positive": 92,
+      "negative": 8,
+      "owners": 750000,
+      "initialPrice": 49.99,
+      "discount": 0.1,
+      "languages": ["English", "Italian"],
+      "genre": "Racing",
+      "price": 44.99,
+      "ccu": 4000,
+      "tags": {
+        "Multiplayer": 200,
+        "Competitive": 300,
+        "Simulation": 400
+      }
+    },
+    {
+      "game_id": 4,
+      "name": "Mystery Manor",
+      "developer": "Mystery Makers",
+      "publisher": "Puzzle House",
+      "positive": 85,
+      "negative": 15,
+      "owners": 300000,
+      "initialPrice": 29.99,
+      "discount": 0.25,
+      "languages": ["English", "Japanese"],
+      "genre": "Puzzle",
+      "price": 22.49,
+      "ccu": 1500,
+      "tags": {
+        "Casual": 100,
+        "Hidden Object": 200,
+        "Mystery": 300
+      }
+    },
+    {
+      "game_id": 5,
+      "name": "Space Odyssey",
+      "developer": "Galactic Games",
+      "publisher": "Universe Studios",
+      "positive": 90,
+      "negative": 10,
+      "owners": 600000,
+      "initialPrice": 69.99,
+      "discount": 0.3,
+      "languages": ["English", "Russian"],
+      "genre": "Sci-Fi",
+      "price": 48.99,
+      "ccu": 3500,
+      "tags": {
+        "Exploration": 150,
+        "Space": 250,
+        "Strategy": 350
+      }
+    }
+  ]
+  
