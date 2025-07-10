@@ -12,9 +12,11 @@ import {
 
 /* Components */
 import Home from './component/Home'
-import GameTile from './component/GameTile';
-
 import Game from './component/Game';
+import Account from './component/Account';
+import Cart from './component/Cart';
+import Checkout from './component/Checkout';
+import About from './component/About';
 
 
 
@@ -32,7 +34,7 @@ function App() {
     <Router>
     <nav className="navbar navbar-expand-lg bg-body-tertiary">
           <div className="container-fluid">
-            <a className="navbar-brand" href="/">Umbrella Games</a>
+            <Link className="navbar-brand" to="/">Umbrella Games</Link>
             <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"></span>
             </button>
@@ -44,8 +46,13 @@ function App() {
                   </Link>
                 </li>
                 <li className="nav-item dropdown">
-                  <Link className="nav-link" to="/login">
+                  <Link className="nav-link" to="/account">
                     Login
+                  </Link>
+                </li>
+                <li className="nav-item dropdown">
+                  <Link className="nav-link" to="/cart">
+                    Cart
                   </Link>
                 </li>
               </ul>
@@ -56,6 +63,11 @@ function App() {
       <main>
         <Routes>
         <Route exact path="/" element={<Home />} />
+        <Route path='account' element={<Account/>}/>
+        <Route path="game/:game_id" element={<Game/>}/>
+        <Route path="cart" element={<Cart/>}/>
+        <Route path="checkout" element={<Checkout/>}/>
+        <Route path="about" element={<About/>}/>
         </Routes>
 
 

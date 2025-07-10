@@ -24,14 +24,14 @@ const Home = (props) => {
 
     return (
         <>
-        <Featured/>
-        <Reccomended/>
+        <Featured games={games}/>
+        <Reccomended games={games}/>
         <div>
             All Games:
             <div className="card-container">
                 {
                     games.map((game) => (
-                        <GameTile key={game.id} data={game}/>
+                        <GameTile key={game.game_id} data={game}/>
                     ))
                 }
             </div>
