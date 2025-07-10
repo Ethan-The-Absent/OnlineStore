@@ -1,8 +1,23 @@
 import express from 'express';
 import { verifyToken, isAdmin, isOwnerOrAdmin } from '../middleware/authMiddleware.js';
 import User from '../models/User.js';
-
 const router = express.Router();
+
+// Error handling helper function
+const handleError = (error, res, defaultStatus = 500) => {
+  // Log detailed error information to console
+  console.error('USER ERROR:', {
+    message: error.message,
+    stack: error.stack,
+    status: error.status || defaultStatus,
+    timestamp: new Date().toISOString()
+  });
+
+  // Send vague message to client
+  return res.status(error.status || defaultStatus).json({
+    message: 'User operation error occurred. Please try again or contact support.'
+  });
+};
 
 /**
  * @route GET /users
@@ -11,11 +26,12 @@ const router = express.Router();
  */
 router.get('/', verifyToken, isAdmin, async (req, res) => {
   try {
-    const collection = User.getCollection();
-    const users = await collection.find({}, { projection: { password: 0, refreshToken: 0 } }).toArray();
-    return res.status(200).json(users);
+    const users = await User.findAll();
+    // Convert to plain objects and remove sensitive data
+    const usersData = users.map(user => user.toJSON());
+    return res.status(200).json(usersData);
   } catch (error) {
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    handleError(error, res);
   }
 });
 
@@ -29,14 +45,16 @@ router.get('/:userId', verifyToken, isOwnerOrAdmin, async (req, res) => {
     const user = await User.findById(req.params.userId);
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      const notFoundError = new Error('User not found');
+      notFoundError.status = 404;
+      throw notFoundError;
     }
     
     // Convert to plain object and remove sensitive data
     const userData = user.toJSON();
     return res.status(200).json(userData);
   } catch (error) {
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    handleError(error, res);
   }
 });
 
@@ -53,14 +71,18 @@ router.put('/:userId', verifyToken, isOwnerOrAdmin, async (req, res) => {
     // Get the user
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      const notFoundError = new Error('User not found');
+      notFoundError.status = 404;
+      throw notFoundError;
     }
     
     // Check if username is being changed and if it already exists
     if (username && username !== user.username) {
       const usernameExists = await User.usernameExists(username);
       if (usernameExists) {
-        return res.status(400).json({ message: 'Username already exists' });
+        const usernameError = new Error('Username already exists');
+        usernameError.status = 400;
+        throw usernameError;
       }
       user.username = username;
     }
@@ -79,14 +101,14 @@ router.put('/:userId', verifyToken, isOwnerOrAdmin, async (req, res) => {
     
     return res.status(200).json({ message: 'User updated successfully', user: user.toJSON() });
   } catch (error) {
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    handleError(error, res);
   }
 });
 
 /**
  * @route DELETE /users/:userId
  * @desc Delete user
- * @access Private (admin only)
+ * @access Private/Admin
  */
 router.delete('/:userId', verifyToken, isAdmin, async (req, res) => {
   try {
@@ -95,7 +117,9 @@ router.delete('/:userId', verifyToken, isAdmin, async (req, res) => {
     // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      const notFoundError = new Error('User not found');
+      notFoundError.status = 404;
+      throw notFoundError;
     }
     
     // Delete the user
@@ -104,7 +128,7 @@ router.delete('/:userId', verifyToken, isAdmin, async (req, res) => {
     
     return res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    handleError(error, res);
   }
 });
 

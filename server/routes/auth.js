@@ -13,9 +13,9 @@ const handleError = (error, res, defaultStatus = 500) => {
     status: error.status || defaultStatus,
     timestamp: new Date().toISOString()
   });
-  
+
   // Send vague message to client
-  return res.status(error.status || defaultStatus).json({ 
+  return res.status(error.status || defaultStatus).json({
     message: 'Authentication error occurred. Please try again or contact support.'
   });
 };

@@ -1,5 +1,6 @@
 import express from 'express';
 import authRoutes from './auth.js';
+import gameRoutes from './games.js';
 import userRoutes from './users.js';
 
 const router = express.Router();
@@ -14,6 +15,9 @@ router.use('/auth', authRoutes);
 
 // Mount user management routes
 router.use('/users', userRoutes);
+
+// Mount game routes
+router.use('/games', gameRoutes);
 
 // Add health check route
 router.get('/health', (req, res) => {

@@ -9,31 +9,31 @@ export const verifyToken = async (req, res, next) => {
   try {
     // Get token from Authorization header
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'Access token is required' });
     }
-    
+
     // Extract the token (remove "Bearer " prefix)
     const token = authHeader.split(' ')[1];
-    
+
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Find user by ID from token
     const user = await User.findById(decoded.id);
-    
+
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
-    
+
     // Attach user to request object for use in protected routes
     req.user = {
       id: user._id,
       username: user.username,
       role: user.role || 'user' // Default to 'user' if role not specified
     };
-    
+
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
@@ -55,11 +55,11 @@ export const isAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Authentication required' });
   }
-  
+
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Requires admin privileges' });
   }
-  
+
   next();
 };
 
@@ -72,7 +72,7 @@ export const isOwnerOrAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Authentication required' });
   }
-  
+
   // Allow if admin or if the user is accessing their own resource
   if (req.user.role === 'admin' || req.user.id.toString() === req.params.userId) {
     next();
@@ -82,7 +82,7 @@ export const isOwnerOrAdmin = (req, res, next) => {
 };
 
 export default {
-    verifyToken,
-    isAdmin,
-    isOwnerOrAdmin,
-  };
+  verifyToken,
+  isAdmin,
+  isOwnerOrAdmin,
+};

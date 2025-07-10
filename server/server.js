@@ -10,14 +10,14 @@ import routes from './routes/index.js';
 dotenv.config();
 // Get secret env variables
 dotenv.config({
-    path: './.env.secret'
+  path: './.env.secret'
 });
 
 // Create main app
 const app = express();
 app.use(cors({
-    credentials: true, // Used for refresh JWT cookie
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000' // Allow requests from frontend
+  credentials: true, // Used for refresh JWT cookie
+  origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000' // Allow requests from frontend
 }));
 
 app.use(cookieParser()); // Middleware to parse cookies for JWT
@@ -42,7 +42,7 @@ app.use((err, req, res, next) => {
 (async () => {
   try {
     await database.connect();
-    
+
     // Start server after successful connection
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
