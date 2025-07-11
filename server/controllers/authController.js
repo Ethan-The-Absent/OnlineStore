@@ -6,7 +6,7 @@ class AuthController {
   // Register a new user
   static async register(req, res) {
     try {
-      const { username, password } = req.body;
+      const { username, password } = req.body || {};
 
       // Validate input
       if (!username || !password) {
@@ -38,7 +38,7 @@ class AuthController {
   // Login user
   static async login(req, res) {
     try {
-      const { username, password } = req.body;
+      const { username, password } = req.body || {};
 
       // Validate input
       if (!username || !password) {

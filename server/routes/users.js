@@ -3,6 +3,9 @@ import { verifyToken, isAdmin, isOwnerOrAdmin } from '../middleware/authMiddlewa
 import User from '../models/User.js';
 import Game from '../models/Game.js';
 import { parse } from 'path';
+import CreditCard from '../models/CreditCard.js';
+import Address from '../models/Address.js';
+import Order from '../models/Order.js';
 const router = express.Router();
 
 // Error handling helper function
@@ -34,6 +37,8 @@ router.get('/', verifyToken, isAdmin, async (req, res) => {
     handleError(error, res);
   }
 });
+
+
 
 /**
  * @route GET /user/:userId/cart
@@ -72,6 +77,8 @@ router.put('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => {
       notFoundError.status = 404;
       throw notFoundError;
     }
+
+    req.body = req.body || {}
 
     const gameId = parseInt(req.body.gameId);
     const parsedGameId = (typeof gameId === 'number' && gameId >= 0) ? gameId : null;
@@ -116,6 +123,8 @@ router.delete('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => 
       throw notFoundError;
     }
 
+    req.body = req.body || {}
+
     const gameId = parseInt(req.body.gameId);
     const parsedGameId = (typeof gameId === 'number' && gameId >= -1) ? gameId : null;
     if (parsedGameId === null) {
@@ -155,6 +164,95 @@ router.delete('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => 
 });
 
 /**
+ * @route POST /users/:userId/cart
+ * @desc Complete a purchase of the cart
+ * @access Private (owner or admin)
+ */
+router.post('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      const notFoundError = new Error('User not found');
+      notFoundError.status = 404;
+      throw notFoundError;
+    }
+
+    if (user.cart.size === 0) {
+      return res.status(400).json({ message: 'Cart is empty' });
+    }
+
+    req.body = req.body || {}
+    const { shippingInfo, cardInfo } = req.body;
+
+    // Validate input
+    if (!shippingInfo || !cardInfo) {
+      return res.status(400).json({ message: 'Shipping and credit card information are required' });
+    }
+
+    // Make sure all address info is defined
+    const { fullName, country, city, state, zip, streetAddress } = shippingInfo;
+    if (!fullName || !country || !city || !state || !zip || !streetAddress) {
+      return res.status(400).json({ message: 'Shipping information incorrect or partially missing' });
+    }
+
+    // Make an Address and test if its valid
+    const address = new Address({ fullName, country, city, state, zip, streetAddress });
+    if (!address.isValid()) {
+      return res.status(400).json({ message: 'Address is incorrect' });
+    }
+
+    // Make sure all credit card info is defined
+    const { cardName, cardNumber, cardExp, cardCvv, cardZip } = cardInfo;
+    if (!cardName || !cardNumber || !cardExp || !cardCvv || !cardZip) {
+      return res.status(400).json({ message: 'Credit card partially missing' });
+    }
+
+    // Make a credit card object and test if its valid
+    const creditCard = new CreditCard({ cardName, cardNumber, cardExp, cardCvv, cardZip })
+    console.log(creditCard)
+    if (!creditCard.isValid()) {
+      return res.status(400).json({ message: 'Credit card is incorrect' });
+    }
+
+    const gameIds = Array.from(user.cart);
+    const games = await Game.findManyIds(gameIds);
+    const total = games.reduce((accumulator, game) => accumulator + game.price, 0);
+
+    const order = new Order({ userId: user._id, shipping: address.toJson(), gameIds: gameIds, total: total })
+    const completeOrder = await order.save()
+    await user.addPurchasesFromCart()
+
+    return res.status(200).json(completeOrder.toJSON());
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * @route GET /user/:userId/purchases
+ * @des Get user purchases by ID
+ * @access Private (owner or admin)
+ */
+router.get('/:userId/purchases', verifyToken, isOwnerOrAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      const notFoundError = new Error('User not found');
+      notFoundError.status = 404;
+      throw notFoundError;
+    }
+
+    // Return the users cart
+    const userPurchases = Array.from(user.purchases);
+    return res.status(200).json(userPurchases);
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
  * @route GET /users/:userId
  * @desc Get user by ID
  * @access Private (owner or admin)
@@ -184,6 +282,7 @@ router.get('/:userId', verifyToken, isOwnerOrAdmin, async (req, res) => {
  */
 router.put('/:userId', verifyToken, isOwnerOrAdmin, async (req, res) => {
   try {
+    req.body = req.body || {}
     const { username, role } = req.body;
     const userId = req.params.userId;
 

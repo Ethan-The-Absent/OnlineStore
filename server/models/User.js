@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import database from '../db.js';
+import Order from './Order.js';
 
 class User {
   constructor(userData) {
@@ -106,7 +107,7 @@ class User {
 
   // Add cart to purchases
   async addPurchasesFromCart() {
-    this.purchases = this.purchases.union(this.cart);
+    Array.from(this.cart).map(gameId => this.purchases.add(gameId));
     this.cart.clear()
     return this.save();
   }
@@ -129,6 +130,11 @@ class User {
   async clearCart() {
     this.cart.clear();
     return this.save();
+  }
+
+  // Gets orders of the user
+  async getOrders() {
+    return Order.findByUserId(this._id);
   }
 
   // Creates a new cart with already purchased games removed

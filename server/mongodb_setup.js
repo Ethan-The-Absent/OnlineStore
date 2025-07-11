@@ -65,6 +65,12 @@ class DatabaseManager {
         console.log("Created users collection");
       }
 
+      // Create orders collection if it doesn't exist
+      if (!collectionNames.includes("orders")) {
+        await this.db.createCollection("orders");
+        console.log("Created orders collection");
+      }
+
       // Create games collection if it doesn't exist
       if (!collectionNames.includes("games")) {
         await this.db.createCollection("games");
@@ -75,7 +81,7 @@ class DatabaseManager {
       if (!collectionNames.includes("counters")) {
         await this.db.createCollection("counters");
         console.log("Created counters collection");
-        
+
         // Initialize the game counter to start from 0
         const counters = this.db.collection("counters");
         await counters.insertOne({ _id: "gameId", sequence_value: 0 });
@@ -94,6 +100,9 @@ class DatabaseManager {
       const users = this.db.collection("users");
       await users.createIndex({ "username": 1 }, { unique: true });
       await users.createIndex({ "refreshToken": 1 });
+
+      const orders = this.db.collection("orders");
+      await users.createIndex({ "userId": 1 })
 
       const games = this.db.collection("games");
       await games.createIndex({ "_id": 1 });
@@ -130,18 +139,18 @@ class DatabaseManager {
       console.log(`Importing games from CSV file: ${filePath}`);
       const gameData = await this.parseCSVFile(filePath);
       console.log(`Parsed ${gameData.length} games from CSV file`);
-      
+
       if (gameData.length > 0) {
         const games = this.db.collection("games");
-        
+
         // Insert games into the collection with sequential IDs from counter
         for (const game of gameData) {
           // Get next sequence value for game ID
           const gameId = await this.getNextSequence("gameId");
-          
+
           // Use the counter value as the _id field
           game._id = gameId;
-          
+
           // Insert the game with the counter as its ID
           await games.insertOne(game);
         }
@@ -215,17 +224,17 @@ async function setupDatabase() {
     process.env.MONGO_DB_URL,
     process.env.MONGO_DB
   );
-  
+
   try {
     await dbManager.connect();
     await dbManager.initializeCollections();
-    
+
     // Import games from CSV file if path is provided
     if (process.env.DATA_PATH) {
       const csvFilePath = path.resolve(process.env.DATA_PATH);
       await dbManager.importGamesFromCSV(csvFilePath);
     }
-    
+
     console.log("Database setup complete!");
   } catch (error) {
     console.error("Database setup failed:", error);
