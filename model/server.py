@@ -1,177 +1,164 @@
-from fastapi import FastAPI, Query, Depends, HTTPException
-from typing import List, Optional, Dict, Set
+from fastapi import FastAPI, Query, Depends, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
+from typing import List, Optional, Dict, Set, Tuple
 import pandas as pd
 import numpy as np
 from functools import lru_cache
+from contextlib import asynccontextmanager
+import logging
+import time
+from starlette.middleware.base import BaseHTTPMiddleware
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+from model import RecommendationModel
+
+# Global variable to store the model
+model_instance = None
+
+# Rate limiting middleware
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, calls: int = 100, period: int = 60):
+        super().__init__(app)
+        self.calls = calls
+        self.period = period
+        self.request_history = {}
+        
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host
+        current_time = time.time()
+        
+        # Clean up old entries
+        self.request_history = {
+            ip: timestamps for ip, timestamps in self.request_history.items()
+            if timestamps and timestamps[-1] > current_time - self.period
+        }
+        
+        # Check if client has history
+        if client_ip not in self.request_history:
+            self.request_history[client_ip] = []
+        
+        # Check rate limit
+        client_history = self.request_history[client_ip]
+        if len(client_history) >= self.calls:
+            oldest_allowed = current_time - self.period
+            if client_history[0] > oldest_allowed:
+                return HTTPException(
+                    status_code=429, 
+                    detail=f"Rate limit exceeded. Maximum {self.calls} calls per {self.period} seconds."
+                )
+            # Remove older requests outside the window
+            while client_history and client_history[0] <= oldest_allowed:
+                client_history.pop(0)
+        
+        # Add current request timestamp
+        client_history.append(current_time)
+        
+        # Process the request
+        return await call_next(request)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the model at startup
+    global model_instance
+    try:
+        model_instance = RecommendationModel()
+        logger.info("Model loaded successfully during application startup!")
+    except Exception as e:
+        logger.error(f"Failed to load model: {str(e)}")
+        raise
+    
+    yield
+    
+    # Clean up resources when the application shuts down
+    try:
+        model_instance = None
+        logger.info("Model resources released during application shutdown!")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {str(e)}")
+
+# Update your FastAPI initialization to include the lifespan
 app = FastAPI(
     title="Model Prediction API",
     description="API that uses a model to recommend game ids",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
-# Model class to encapsulate the recommendation logic
-class RecommendationModel:
-    def __init__(self):
-        # Load your data and model here
-        self.df = self._load_dataframe()
-        self.similarity_matrix = self._load_similarity_matrix()
-        # Create an index mapping game IDs to dataframe indices for faster lookups
-        self._create_id_index()
-        print("Model loaded successfully!")
-        
-    def _load_dataframe(self):
-        processed_games_df = pd.read_parquet('../Data/processed_games.parquet')
-        return processed_games_df
-    
-    def _load_similarity_matrix(self):
-        similarity_df = pd.read_parquet('../Data/games_similarity_matrix.parquet')
-        return similarity_df
-    
-    def _create_id_index(self):
-        """Create a dictionary mapping game IDs to dataframe indices for O(1) lookups"""
-        self.id_to_index: Dict[str, int] = {}
-        # Check what columns are available in the dataframe
-        id_column = self.df.index if 'id' not in self.df.columns else self.df['id']
-        for idx, game_id in enumerate(id_column):
-            self.id_to_index[str(game_id)] = idx
+# Add rate limiting - 100 requests per minute
+app.add_middleware(RateLimitMiddleware, calls=100, period=60)
 
-    
-    def get_indices_from_ids(self, ids: List[str]) -> Set[int]:
-        """Convert a list of game IDs to a set of dataframe indices using the index"""
-        indices = set()
-        for game_id in ids:
-            if game_id in self.id_to_index:
-                indices.add(self.id_to_index[game_id])
-        return indices
-    
-    def predict_by_id(self, id_value: str, n: int = 5, excluded_ids: List[str] = None) -> list:
-        """Get recommendation indices for an item by its ID"""
-        try:
-            # Use the index for O(1) lookup
-            if id_value not in self.id_to_index:
-                print(f"Item with ID {id_value} not found in the database.")
-                return []
-            
-            item_idx = self.id_to_index[id_value]
-            # Get recommendations using the index
-            return self.predict_by_index(item_idx, n, excluded_ids)
-            
-        except Exception as e:
-            print(f"Error in predict_by_id: {str(e)}")
-            return []
-    
-    def predict_by_index(self, index: int, n: int = 5, excluded_ids: List[str] = None) -> list:
-        """Get recommendation indices by dataframe index"""
-        try:
-            # Check if index exists in the dataframe
-            if index < 0 or index >= len(self.df):
-                print(f"Index {index} out of range.")
-                return []
-            
-            # Calculate how many candidates we need based on exclusion list size
-            exclude_size = 0 if not excluded_ids else len(excluded_ids)
-            
-            # For better performance, determine the number of candidates to fetch initially
-            # We want n + exclude_size, but also add a buffer to reduce the chance of needing more fetches
-            buffer_factor = 1.2  # 20% buffer
-            candidate_count = min(
-                int((n + exclude_size) * buffer_factor), 
-                len(self.similarity_matrix.loc[index]) - 1
-            )
-            
-            # Get similarity scores for this item
-            similarity_scores = self.similarity_matrix.loc[index].sort_values(ascending=False)
-            
-            # If no exclusion, we can return directly for maximum performance
-            if not excluded_ids or len(excluded_ids) == 0:
-                return similarity_scores.iloc[1:n+1].index.tolist()
-            
-            # Convert excluded_ids to indices using our fast lookup index
-            exclude_indices = self.get_indices_from_ids(excluded_ids)
-            
-            # Add the query index itself to the exclusion set
-            exclude_indices.add(index)
-            
-            # Get top candidates
-            top_candidates = similarity_scores.iloc[1:candidate_count+1]
-            
-            # Filter out excluded indices efficiently
-            result = []
-            for idx in top_candidates.index:
-                if idx not in exclude_indices:
-                    result.append(idx)
-                    if len(result) >= n:
-                        break
-            
-            # If we still need more recommendations, fetch more in batches
-            if len(result) < n:
-                remaining_needed = n - len(result)
-                batch_size = max(remaining_needed * 2, exclude_size)  # Adjust batch size based on exclusion list
-                offset = candidate_count + 1
-                
-                while len(result) < n and offset < len(similarity_scores):
-                    # Fetch the next batch
-                    next_batch_size = min(batch_size, len(similarity_scores) - offset)
-                    next_batch = similarity_scores.iloc[offset:offset+next_batch_size]
-                    offset += next_batch_size
-                    
-                    # Process this batch
-                    for idx in next_batch.index:
-                        if idx not in exclude_indices:
-                            result.append(idx)
-                            if len(result) >= n:
-                                break
-                    
-                    # If we've gone through all items and still don't have enough, break
-                    if next_batch_size < batch_size:
-                        break
-            
-            return result
-            
-        except Exception as e:
-            print(f"Error in predict_by_index: {str(e)}")
-            return []
-
-
-# Create a singleton pattern for the model to avoid reloading
-@lru_cache(maxsize=1)
 def get_model():
-    return RecommendationModel()
+    if model_instance is None:
+        raise HTTPException(status_code=503, detail="Model not loaded yet")
+    return model_instance
 
-# Load the model at startup
-@app.on_event("startup")
-async def startup_event():
-    get_model()  # Initialize the model
+# Cache for common predictions
+@lru_cache(maxsize=1000)
+def cached_predict_by_id(id: str, n: int, excluded_ids_tuple: Optional[Tuple[str, ...]] = None):
+    model = get_model()
+    excluded_ids = list(excluded_ids_tuple) if excluded_ids_tuple else None
+    return model.predict_by_id(id, n, excluded_ids)
+
+@lru_cache(maxsize=1000)
+def cached_predict_by_index(index: int, n: int, excluded_ids_tuple: Optional[Tuple[str, ...]] = None):
+    model = get_model()
+    excluded_ids = list(excluded_ids_tuple) if excluded_ids_tuple else None
+    return model.predict_by_index(index, n, excluded_ids)
 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Game Recommender API"}
 
 @app.get("/model/predict_by_id", response_model=List[int])
-def predict_by_id(id: str = Query(..., description="Input ID to find similar items"), 
-            n: int = Query(5, description="Number of similar items to return"),
-            excluded_ids: Optional[List[str]] = Query(None, description="IDs to exclude from recommendations"),
-            model: RecommendationModel = Depends(get_model)):
-    return model.predict_by_id(id, n, excluded_ids)
+async def predict_by_id(
+    id: str = Query(..., description="Input ID to find similar items"), 
+    n: int = Query(5, description="Number of similar items to return"),
+    excluded_ids: Optional[List[str]] = Query(None, description="IDs to exclude from recommendations")
+):
+    # Convert list to tuple for caching
+    excluded_ids_tuple = tuple(excluded_ids) if excluded_ids else None
+    
+    # Run prediction in a threadpool to avoid blocking
+    return await run_in_threadpool(
+        lambda: cached_predict_by_id(id, n, excluded_ids_tuple)
+    )
 
 @app.get("/model/predict_by_index", response_model=List[int])
-def predict_by_index(index: int = Query(..., description="Dataframe index to find similar items"), 
-                     n: int = Query(5, description="Number of similar items to return"),
-                     excluded_ids: Optional[List[str]] = Query(None, description="IDs to exclude from recommendations"),
-                     model: RecommendationModel = Depends(get_model)):
-    print(index)
-    print(excluded_ids)
-    return model.predict_by_index(index, n, excluded_ids)
+async def predict_by_index(
+    index: int = Query(..., description="Dataframe index to find similar items"), 
+    n: int = Query(5, description="Number of similar items to return"),
+    excluded_ids: Optional[List[str]] = Query(None, description="IDs to exclude from recommendations")
+):
+    # Convert list to tuple for caching
+    excluded_ids_tuple = tuple(excluded_ids) if excluded_ids else None
+    
+    # Run prediction in a threadpool to avoid blocking
+    return await run_in_threadpool(
+        lambda: cached_predict_by_index(index, n, excluded_ids_tuple)
+    )
 
 @app.get("/health")
-def health_check(model: RecommendationModel = Depends(get_model)):
+async def health_check():
     """Health check endpoint that also verifies the model is loaded."""
-    return {
-        "status": "healthy", 
-        "model_loaded": True,
-        "items_count": len(model.df)
-    }
+    try:
+        model = get_model()
+        return {
+            "status": "healthy", 
+            "model_loaded": True,
+            "items_count": len(model.df)
+        }
+    except HTTPException:
+        return {
+            "status": "unhealthy",
+            "model_loaded": False,
+            "items_count": 0
+        }
 
 if __name__ == "__main__":
     import uvicorn
