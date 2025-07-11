@@ -28,11 +28,7 @@ export const verifyToken = async (req, res, next) => {
     }
 
     // Attach user to request object for use in protected routes
-    req.user = {
-      id: user._id,
-      username: user.username,
-      role: user.role || 'user' // Default to 'user' if role not specified
-    };
+    req.user = user.minimalToJSON();
 
     next();
   } catch (error) {
