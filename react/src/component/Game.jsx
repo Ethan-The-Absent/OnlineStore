@@ -61,7 +61,7 @@ const Game = (props) => {
            <button>
             Add To Cart
            </button>) :
-           (<Link to="/login"><button>
+           (<Link to="/account"><button>
             Login to add to Cart
            </button></Link>)}
            <div className="ttc">
