@@ -102,7 +102,16 @@ router.get('/search', async (req, res) => {
  */
 router.get('/:gameId', async (req, res) => {
   try {
-    const game = await Game.findById(req.params.gameId);
+    const providedId = parseInt(req.params.gameId);
+    const gameId = providedId >= 0 ? providedId : null;
+    // Validate gameId
+    if (gameId === null) {
+      const validationError = new Error('Invalid gameId parameter');
+      validationError.status = 400;
+      throw validationError;
+    }
+
+    const game = await Game.findById(gameId);
 
     if (!game) {
       const notFoundError = new Error('Game not found');

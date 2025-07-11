@@ -3,7 +3,7 @@ import database from '../db.js';
 
 class Game {
   constructor(gameData) {
-    this._id = gameData._id || null;
+    this._id = (typeof gameData._id === 'number' && gameData._id >= 0) ? gameData._id : null;
     this.name = gameData.name;
     this.developer = gameData.developer;
     this.publisher = gameData.publisher;
@@ -23,11 +23,23 @@ class Game {
   static getCollection() {
     return database.getCollection(process.env.MONGO_DB_GAME_COLLECTION);
   }
+  
+  // Get next game index
+  async getNextSequence() {
+    const counters = this.db.collection(process.env.MONGO_DB_COUNTER_COLLECTION);
+    const result = await counters.findOneAndUpdate(
+      { _id: process.env.MONGO_DB_COUNTER_GAMEID },
+      { $inc: { sequence_value: 1 } },
+      { returnDocument: 'before' }
+    );
+    return result.sequence_value;
+  }
 
   // Find game by ID
+  // ID is a number
   static async findById(id) {
     const collection = this.getCollection();
-    const game = await collection.findOne({ _id: new ObjectId(id) });
+    const game = await collection.findOne({ _id: id });
     return game ? new Game(game) : null;
   }
 
@@ -198,14 +210,14 @@ class Game {
       // Update existing game
       const { _id, ...updateData } = this;
       await collection.updateOne(
-        { _id: new ObjectId(_id) },
+        { _id: _id },
         { $set: updateData }
       );
       return this;
     } else {
       // Create new game
-      const result = await collection.insertOne(this);
-      this._id = result.insertedId;
+      this._id = Game.getNextSequence()
+      await collection.insertOne(this);
       return this;
     }
   }
