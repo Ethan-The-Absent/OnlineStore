@@ -40,3 +40,78 @@
 .read-the-docs {
   color: #888;
 }
+
+.tag-bubble {
+  font-size: 0.75em;
+  color: rgb(255, 255, 255);
+  background-color: rgba(59, 59, 59, 0.452);
+  border-radius: 4px;
+  margin: 3px;
+  padding: 2px;
+}
+
+.faint-text {
+  color: rgba(0, 0, 0, 0.424);
+}
+
+.discount {
+  color: white;
+  background-color: rgb(131, 131, 255);
+  padding-left: 5px;
+  margin-right: 5px;
+  
+}
+
+.stars {
+  font-family: monospace;
+  font-size: 3em;
+  color: rgb(255, 225, 0);
+}
+
+.star-empty {
+  color: rgb(95, 81, 81);
+}
+
+/*Tooltip container and Tooltip*/
+.ttc{
+  position: relative;
+}
+
+.ttc .tt {
+  visibility: hidden;
+  background-color: rgba(0, 0, 0, 0.45);
+  color: white;
+  position: absolute;
+  z-index: 1;
+  width: 120px;
+  bottom: 90%;
+  left: 50%;
+  margin-left: -60px;
+}
+
+.ttc:hover .tt{
+  visibility: visible;
+}
+
+.tag-holder {
+  margin:10px;
+}
+
+.tbl {
+  color: white;
+  background-color: black;
+  margin: 10px;
+  justify-content: start;
+  text-align: left;
+  width: 100%;
+  
+}
+th {
+  padding: 12px;
+}
+
+td {
+  background-color: rgb(255, 255, 255);
+  color: black;
+  padding: 5px;
+}
