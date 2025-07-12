@@ -80,7 +80,7 @@ router.put('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => {
 
     req.body = req.body || {}
 
-    const gameId = parseInt(req.body.gameId);
+    const gameId = parseInt(req.body.gameId, 10);
     const parsedGameId = (typeof gameId === 'number' && gameId >= 0) ? gameId : null;
     if (parsedGameId === null) {
       // Invalid gameId provided
@@ -125,7 +125,7 @@ router.delete('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => 
 
     req.body = req.body || {}
 
-    const gameId = parseInt(req.body.gameId);
+    const gameId = parseInt(req.body.gameId, 10);
     const parsedGameId = (typeof gameId === 'number' && gameId >= -1) ? gameId : null;
     if (parsedGameId === null) {
       // Invalid gameId provided
@@ -210,7 +210,6 @@ router.post('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => {
 
     // Make a credit card object and test if its valid
     const creditCard = new CreditCard({ cardName, cardNumber, cardExp, cardCvv, cardZip })
-    console.log(creditCard)
     if (!creditCard.isValid()) {
       return res.status(400).json({ message: 'Credit card is incorrect' });
     }
@@ -244,7 +243,7 @@ router.get('/:userId/purchases', verifyToken, isOwnerOrAdmin, async (req, res) =
       throw notFoundError;
     }
 
-    // Return the users cart
+    // Return the users purchases
     const userPurchases = Array.from(user.purchases);
     return res.status(200).json(userPurchases);
   } catch (error) {

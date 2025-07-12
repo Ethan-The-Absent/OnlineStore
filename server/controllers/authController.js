@@ -20,7 +20,7 @@ class AuthController {
       }
 
       // Hash password
-      const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS);
+      const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10);
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       // Create new user
@@ -69,7 +69,7 @@ class AuthController {
 
       // Calculate cookie expiry (convert JWT expiration string to milliseconds)
       const refreshExpiry = process.env.JWT_REFRESH_EXPIRATION.endsWith('d')
-        ? parseInt(process.env.JWT_REFRESH_EXPIRATION) * 24 * 60 * 60 * 1000
+        ? parseInt(process.env.JWT_REFRESH_EXPIRATION, 10) * 24 * 60 * 60 * 1000
         : 7 * 24 * 60 * 60 * 1000; // Default to 7 days if parsing fails
 
       // Set refresh token as HTTP-only cookie
@@ -130,7 +130,7 @@ class AuthController {
 
       // Calculate cookie expiry
       const refreshExpiry = process.env.JWT_REFRESH_EXPIRATION.endsWith('d')
-        ? parseInt(process.env.JWT_REFRESH_EXPIRATION) * 24 * 60 * 60 * 1000
+        ? parseInt(process.env.JWT_REFRESH_EXPIRATION, 10) * 24 * 60 * 60 * 1000
         : 7 * 24 * 60 * 60 * 1000;
 
       // Set new refresh token as HTTP-only cookie

@@ -55,7 +55,7 @@ class CreditCard {
 
     // Start from the right and process each digit
     for (let i = cleanNum.length - 1; i >= 0; i--) {
-      let digit = parseInt(cleanNum.charAt(i));
+      let digit = parseInt(cleanNum.charAt(i), 10);
 
       if (double) {
         digit *= 2;
