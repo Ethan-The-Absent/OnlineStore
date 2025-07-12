@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import database from '../db.js';
+import Order from './Order.js';
 
 class User {
   constructor(userData) {
@@ -10,11 +11,29 @@ class User {
     this.createdAt = userData.createdAt || new Date();
     this.lastLogin = userData.lastLogin || null;
     this.refreshToken = userData.refreshToken || null;
+
+    /**
+     * @type {Set<number>}
+     */
+    this.purchases = userData.purchases ?  new Set(userData.purchases) : new Set([]);
+
+    /**
+     * @type {Set<number>}
+     */
+    this.cart = userData.cart ?  new Set(userData.cart) : new Set([]);
   }
 
   // Get user collection
   static getCollection() {
     return database.getCollection(process.env.MONGO_DB_USER_COLLECTION);
+  }
+
+  // Find all users
+  // Returns sanitized user info instead of all user info
+  static async findAll() {
+    const collection = this.getCollection();
+    const users = await collection.find({}).toArray();
+    return users.map(user => (new User(user)).minimalToJSON());
   }
 
   // Find user by ID
@@ -52,6 +71,9 @@ class User {
     if (this._id) {
       // Update existing user
       const { _id, ...updateData } = this;
+      updateData.cart = Array.from(this.cart)
+      updateData.purchases = Array.from(this.purchases)
+
       await collection.updateOne(
         { _id: _id },
         { $set: updateData }
@@ -83,10 +105,52 @@ class User {
     return this.save();
   }
 
+  // Add cart to purchases
+  async addPurchasesFromCart() {
+    Array.from(this.cart).map(gameId => this.purchases.add(gameId));
+    this.cart.clear()
+    return this.save();
+  }
+
+  // Add game to cart
+  // Removes game from cart if already purchased
+  async addCartGame(gameId) {
+    this.cart.add(gameId);
+    this.cart = this.cartPurchaseDifference();
+    return this.save();
+  }
+
+  // Remove game from cart
+  async removeCartGame(gameId) {
+    this.cart.delete(gameId)
+    return this.save();
+  }
+
+  // Clear cart
+  async clearCart() {
+    this.cart.clear();
+    return this.save();
+  }
+
+  // Gets orders of the user
+  async getOrders() {
+    return Order.findByUserId(this._id);
+  }
+
+  // Creates a new cart with already purchased games removed
+  cartPurchaseDifference() {
+    return new Set([...this.cart].filter(x => !this.purchases.has(x)));
+  }
+
   // Convert to JSON (remove sensitive data)
   toJSON() {
     const { password, refreshToken, ...userWithoutSensitiveData } = this;
     return userWithoutSensitiveData;
+  }
+
+  minimalToJSON() {
+    const { _id, username, role, lastLogin } = this;
+    return { _id, username, role, lastLogin };
   }
 }
 
