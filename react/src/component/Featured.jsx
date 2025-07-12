@@ -1,15 +1,28 @@
 import React from 'react';
-import GameTile from './GameTile'; // Assuming GameTile is in the same directory
+import GameTile from './GameTile';
 
-const Featured = ({ games }) => (
-  <div className="featured-container">
-    <h1>Featured Games</h1>
-    <div className="card-container">
-      {games.map((game) => (
-        <GameTile key={game.game_id} data={game} />
-      ))}
-    </div>
-  </div>
-);
+const Featured = (props) => 
+  {
+    return (
+      <div className="featured-container">
+        <h1>Featured Games</h1>
+        <div
+          className="card-container"
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            overflowX: 'auto',
+            gap: '1rem',
+            paddingBottom: '1rem',
+            scrollbarWidth: 'thin',
+          }}
+        >
+          {props.games.map((game) => (
+            <GameTile key={game._id} data={game} />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
 export default Featured;

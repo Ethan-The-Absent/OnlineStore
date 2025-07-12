@@ -4,38 +4,138 @@ import GameTile from "./GameTile"
 import Featured from "./Featured";
 import Reccomended from './Reccomend';
 
-import ExampleGame from '../assets/ExampleGame.json'
+
 
 const Home = (props) => {
     const [page, setPage] = useState(0);
-    const games = ExampleGame
+    const [pageSize, setPageSize] = useState(10);
+    const [sort, setSort] = useState(0);
+    const [asc, setAsc] = useState(0);
+
+    const [featuredGames, setFeaturedGames] = useState([]);
+    const [reccomendedGames, setReccomendedGames] = useState([]);
+    const [games, setGames] = useState([]);
+
+    const [pagination, setPagination] = useState({})
+
+
+    const sortings = ['_id', 'name', 'price', 'discount', 'initialPrice', 'positive', 'genre', 'developer'];
+    const sortingsString = ['Game ID', 'Name', 'Price', 'Discount', 'Initial Price', 'Positive Reviews', 'Genre', 'Developer'];
 
     useEffect(() => {
         // Get Data
         const fetchGames = async () => {
+            const queryParams = new URLSearchParams(
+                {"page": page,
+                "pageSize": pageSize,
+                "sort": sortings[sort],
+                "sortOrder": asc})
         try {
-
+            const res = await fetch(`/api/games?${queryParams.toString()}`, {
+                method: 'GET'});
+            
+            if (!res.ok) throw new Error('Failed to fetch games');
+            const data = await res.json();
+            setGames(data.games);
+            setPagination(data.pagination);
         } catch (error) {
             console.error("Error Loading Games:", error)
         }};
 
+        const fetchFeatured = async () => {
+            const queryParams = new URLSearchParams({"page": 0,
+                            "pageSize": 10,
+                            "sortField": 'discount',
+                            "sortOrder": 1})
+            try {
+                const res = await fetch(`/api/games?${queryParams.toString()}`, { method: 'GET'});
+                if (!res.ok) throw new Error('Failed to fetch featured games');
+                const data = await res.json();
+                setFeaturedGames(data.games);
+            } catch (error) {
+                console.error("Error Loading Featured Games:", error);
+            }
+        }
+
+
         fetchGames();
+        fetchFeatured();
     }, [page])
 
     return (
         <>
-        <Featured games={games}/>
-        <Reccomended games={games}/>
-        <div>
-            All Games:
-            <div className="card-container">
-                {
-                    games.map((game) => (
-                        <GameTile key={game.game_id} data={game}/>
-                    ))
-                }
+            <Featured games={featuredGames}/>
+            <Reccomended games={reccomendedGames}/>
+            <div>
+                {/* Paging controls */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                    <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => setPage(prev => Math.max(prev - 1, 0))}
+                        disabled={page === 0}
+                        style={{ marginRight: '1rem' }}
+                    >
+                        &#8592;
+                    </button>
+                    <h3 style={{ margin: 0 }}>All Games</h3> <p style={{ margin: '0 0 0 0.5rem' }}>(Page {page + 1})</p>
+                    <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => setPage(prev => prev + 1)}
+                        style={{ marginLeft: '1rem' }}
+                    >
+                        &#8594;
+                    </button>
+                </div>
+                {/* Controls for sorting, order, and page size */}
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '2rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                    {/* Sort dropdown */}
+                    <div>
+                        <label htmlFor="sort-select" style={{ marginRight: '0.5rem' }}>Sort by:</label>
+                        <select
+                            id="sort-select"
+                            value={sort}
+                            onChange={e => { setSort(Number(e.target.value)); setPage(0); }}
+                            className="form-select"
+                            style={{ display: 'inline-block', width: 'auto' }}
+                        >
+                            {sortingsString.map((label, idx) => (
+                                <option key={sortings[idx]} value={idx}>{label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    {/* Ascending/Descending checkbox */}
+                    <div>
+                        <label htmlFor="asc-checkbox" style={{ marginRight: '0.5rem' }}>Ascending</label>
+                        <input
+                            id="asc-checkbox"
+                            type="checkbox"
+                            checked={asc === 1}
+                            onChange={e => { setAsc(e.target.checked ? 1 : 0); setPage(0); }}
+                        />
+                    </div>
+                    {/* Page size dropdown */}
+                    <div>
+                        <label htmlFor="page-size-select" style={{ marginRight: '0.5rem' }}>Games per page:</label>
+                        <select
+                            id="page-size-select"
+                            value={pageSize}
+                            onChange={e => { setPageSize(Number(e.target.value)); setPage(0); }}
+                            className="form-select"
+                            style={{ display: 'inline-block', width: 'auto' }}
+                        >
+                            {[10, 30, 50, 100, 500].map(size => (
+                                <option key={size} value={size}>{size}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                
+                <div className="card-container">
+                    {games.map((game) => (
+                        <GameTile key={game._id} data={game}/>
+                    ))}
+                </div>
             </div>
-        </div>
         </>
     );
 }

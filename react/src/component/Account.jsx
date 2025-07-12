@@ -1,86 +1,74 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = import.meta.env.VITE_API_URL;
+const API = '/api/auth/';
 
-const Account = () => {
+const Account = (props) => {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    
-
-    const [user, setUser] = useState({
+    const [formUser, setFormUser] = useState({
         username: "",
         passcode: "",
-        confirmPasscode: "" // Added for registration
+        confirmPasscode: ""
     });
-
     const navigate = useNavigate();
-    
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setUser(prevState => ({ ...prevState, [name]: value }));
-        setError(null); // Clear any previous errors when user types
+        setFormUser(prevState => ({ ...prevState, [name]: value }));
+        setError(null);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
-        
         try {
             if (isLogin) {
-                // Login logic
-                if (user.passcode && user.username) {
-                    // Send login POST request
-                    const response = await fetch(`${API}/auth/login`, {
+                if (formUser.passcode && formUser.username) {
+                    const response = await fetch(`${API}login`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            username: user.username,
-                            password: user.passcode
+                            username: formUser.username,
+                            password: formUser.passcode
                         })
                     });
-                    
                     if (!response.ok) {
                         const errorData = await response.json();
                         throw new Error(errorData.message || 'Login failed');
                     }
-                    
                     const data = await response.json();
                     console.log("Login successful:", data);
-                    navigate("/");
+                    window.location.reload();
                 } else {
                     setError("Please fill all fields");
                 }
             } else {
-                // Registration logic
-                if (user.passcode && user.username) {
-                    if (user.passcode === user.confirmPasscode) {
-                        // Send registration POST request
+                if (formUser.passcode && formUser.username) {
+                    if (formUser.passcode === formUser.confirmPasscode) {
                         const response = await fetch(`${API}/auth/register`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                username: user.username,
-                                password: user.passcode
+                                username: formUser.username,
+                                password: formUser.passcode
                             })
                         });
-                        
                         if (!response.ok) {
                             const errorData = await response.json();
                             throw new Error(errorData.message || 'Registration failed');
                         }
-                        
                         const data = await response.json();
                         console.log("Registration successful:", data);
                         setIsLogin(true);
-                        setUser({
-                            username: user.username,
+                        setFormUser({
+                            username: formUser.username,
                             passcode: "",
                             confirmPasscode: ""
                         });
@@ -101,14 +89,37 @@ const Account = () => {
 
     const toggleForm = () => {
         setIsLogin(!isLogin);
-        // Clear form when switching between login and register
-        setUser({
+        setFormUser({
             username: "",
             passcode: "",
             confirmPasscode: ""
         });
     };
 
+    // Logout handler
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+            window.location.reload();
+        } catch (err) {
+            setError('Logout failed');
+        }
+    };
+
+    // If user is present in props, show user info and buttons
+    if (props.user && props.user.username) {
+        return (
+            <div className="text-center mt-5">
+                <h2>Welcome, {props.user.username}!</h2>
+                <div className="mt-4">
+                    <button className="btn btn-success me-2" onClick={() => navigate('/cart')}>Go to Cart</button>
+                    <button className="btn btn-danger" onClick={handleLogout}>Log Out</button>
+                </div>
+            </div>
+        );
+    }
+
+    // Otherwise, show login/register form
     return (
         <div>
             <h2>{isLogin ? "Login" : "Register"}</h2>
@@ -121,7 +132,7 @@ const Account = () => {
                         className="form-control"
                         id="username"
                         name="username"
-                        value={user.username}
+                        value={formUser.username}
                         onChange={handleChange}
                     />
                 </div>
@@ -132,7 +143,7 @@ const Account = () => {
                         className="form-control"
                         id="passcode"
                         name="passcode"
-                        value={user.passcode}
+                        value={formUser.passcode}
                         onChange={handleChange}
                     />
                 </div>
@@ -145,17 +156,15 @@ const Account = () => {
                             className="form-control"
                             id="confirmPasscode"
                             name="confirmPasscode"
-                            value={user.confirmPasscode}
+                            value={formUser.confirmPasscode}
                             onChange={handleChange}
                         />
                     </div>
                 )}
-                
                 <button type="submit" className="btn btn-primary">
                     {isLogin ? "Login" : "Register"}
                 </button>
             </form>
-            
             <div className="mt-3">
                 <p>
                     {isLogin ? "Don't have an account? " : "Already have an account? "}
