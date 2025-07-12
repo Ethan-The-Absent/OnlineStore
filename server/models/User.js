@@ -15,12 +15,12 @@ class User {
     /**
      * @type {Set<number>}
      */
-    this.purchases = userData.purchases ?  new Set(userData.purchases) : new Set([]);
+    this.purchases = Array.isArray(userData.purchases) ?  new Set(userData.purchases) : new Set([]);
 
     /**
      * @type {Set<number>}
      */
-    this.cart = userData.cart ?  new Set(userData.cart) : new Set([]);
+    this.cart = Array.isArray(userData.cart) ?  new Set(userData.cart) : new Set([]);
   }
 
   // Get user collection
