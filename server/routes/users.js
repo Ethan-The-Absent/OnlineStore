@@ -179,7 +179,7 @@ router.post('/:userId/cart', verifyToken, isOwnerOrAdmin, async (req, res) => {
     }
 
     if (user.cart.size === 0) {
-      return res.status(400).json({ message: 'Cart is empty' });
+      return [];
     }
 
     req.body = req.body || {}
