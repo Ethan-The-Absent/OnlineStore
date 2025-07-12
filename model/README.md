@@ -12,5 +12,5 @@
 ### Endpoint Calls
 - GET http://localhost:8000/
 - GET http://localhost:8000/health
-- GET http://localhost:8000/model/predict_by_index?index=18&n=5&excluded_ids=47&excluded_ids=134
-
+- GET http://localhost:8000/model/predict_by_index?indices=1&indices=2&indices=3&n=10&excluded_ids=29&excluded_ids=8
+^ Get 10 recommendations from 3 ids, excluding 2 ids
