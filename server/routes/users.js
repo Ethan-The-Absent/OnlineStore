@@ -2,10 +2,10 @@ import express from 'express';
 import { verifyToken, isAdmin, isOwnerOrAdmin } from '../middleware/authMiddleware.js';
 import User from '../models/User.js';
 import Game from '../models/Game.js';
-import { parse } from 'path';
 import CreditCard from '../models/CreditCard.js';
 import Address from '../models/Address.js';
 import Order from '../models/Order.js';
+import Predictor from '../models/Predictor.js';
 const router = express.Router();
 
 // Error handling helper function
@@ -246,6 +246,54 @@ router.get('/:userId/purchases', verifyToken, isOwnerOrAdmin, async (req, res) =
     // Return the users purchases
     const userPurchases = Array.from(user.purchases);
     return res.status(200).json(userPurchases);
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * @route GET /games/:gameId/predict
+ * @desc Get game recommendations based on another game 
+ * @access Private (owner or admin)
+ */
+router.get('/:userId/predict', verifyToken, isOwnerOrAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      const notFoundError = new Error('User not found');
+      notFoundError.status = 404;
+      throw notFoundError;
+    }
+
+    const numPred = parseInt(req.query.numPred, 10);
+    const parsedNumPred = numPred > 0 && numPred < 50 ? numPred : 1;
+
+    const providedId = parseInt(req.query.gameId, 10);
+    const gameId = providedId >= 0 ? providedId : null;
+    // Validate gameId
+    if (gameId !== null) {
+      const game = await Game.findById(gameId);
+
+      if (!game) {
+        const notFoundError = new Error('Game not found');
+        notFoundError.status = 404;
+        throw notFoundError;
+      }
+    }
+
+    // Get predictions from either a specific game or past user purchases
+    const predictIds = gameId ? [gameId] : Array.from(user.purchases);
+    const exclusions = Array.from(user.purchases);
+
+    // Make sure predictIds is not empty
+    if (predictIds.length === 0) {
+      return res.status(400).json({ message: 'No purchases or id to predict from' });
+    }
+
+    const response = Array.from(await Predictor.get("/model/predict_by_index", {"index": predictIds[0], "excluded_ids": exclusions, "n": parsedNumPred}))
+
+    return res.status(200).json(response);
   } catch (error) {
     handleError(error, res);
   }
