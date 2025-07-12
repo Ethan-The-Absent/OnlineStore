@@ -70,7 +70,7 @@ export const isOwnerOrAdmin = (req, res, next) => {
   }
 
   // Allow if admin or if the user is accessing their own resource
-  if (req.user.role === 'admin' || req.user.id.toString() === req.params.userId) {
+  if (req.user.role === 'admin' || req.user._id.toString() === req.params.userId) {
     next();
   } else {
     return res.status(403).json({ message: 'Unauthorized access' });
