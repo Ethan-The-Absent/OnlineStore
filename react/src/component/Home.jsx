@@ -46,7 +46,7 @@ const Home = (props) => {
             const queryParams = new URLSearchParams({"page": 0,
                             "pageSize": 10,
                             "sortField": 'discount',
-                            "sortOrder": 1})
+                            "sortOrder": -1})
             try {
                 const res = await fetch(`/api/games?${queryParams.toString()}`, { method: 'GET'});
                 if (!res.ok) throw new Error('Failed to fetch featured games');

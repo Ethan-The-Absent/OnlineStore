@@ -50,7 +50,7 @@ const Account = (props) => {
             } else {
                 if (formUser.passcode && formUser.username) {
                     if (formUser.passcode === formUser.confirmPasscode) {
-                        const response = await fetch(`${API}/auth/register`, {
+                        const response = await fetch(`${API}register`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

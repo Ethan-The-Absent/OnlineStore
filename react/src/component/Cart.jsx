@@ -11,95 +11,108 @@ const CartItem = (props) => {
         <td>{props.data.price/100}</td>
         
         <td><button style={{background:"#ff111177", width:100}}
-        onClick={() => props.handleRemove(props.data.game_id)}>Remove</button></td>
+        onClick={() => props.handleRemove(props.data._id)}>Remove</button></td>
     </tr>)
 }
 
-const Cart = () => {
-    const [user, setUser] = React.useState(null);
+const Cart = (props) => {
+    const [gameIds, setGameIds] = React.useState([]);
     const [games, setGames] = React.useState([]);
-    const navigate = useNavigate();
 
     React.useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                // Access token
-                const refreshRes = await fetch('/api/auth/refresh', {
-                    method: 'POST',
-                    credentials: 'include', // send cookies
-                });
-                if (!refreshRes.ok) throw new Error('Failed to refresh token');
-                const { accessToken } = await refreshRes.json();
+        if (props.user && Array.isArray(props.user.cart)) {
+            setGameIds(props.user.cart);
+        }
+    }, [props.user]);
 
-                // Send access token to get user data
-                const userRes = await fetch('/api/auth/me', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
+    
+    React.useEffect(() => {
+        if (gameIds.length === 0) {
+            setGames([]);
+            return;
+        }
+        const fetchGames = async () => {
+            try {
+                const res = await fetch(`/api/games?ids=${gameIds.toString()}`, {
+                    method: 'GET'
                 });
-                if (!userRes.ok) throw new Error('Failed to fetch user');
-                const userData = await userRes.json();
-                setUser(userData);
-                // Fetch cart items
-                const cartRes = await fetch(`/api/users/${userData._id}/cart`, {
-                    method: 'POST',
-                    headers: {'Authorization': `Bearer ${accessToken}`},
-                });
-                if (!cartRes.ok) throw new Error('Failed to fetch cart');
-                const cartData = await cartRes.json();
-                if (cartData && cartData.message === 'cart is empty') {
-                    setGames([]);
-                    console.log('Cart is empty');
-                } else {
-                    setGames(cartData.items);
-                    console.log(games, "cart items fetched");
-                }
-            } catch (err) {
-                // If error response is {message: 'cart is empty'}
-                if (err && err.message && err.message.includes('cart is empty')) {
-                    setGames([]);
-                    console.log('Cart is empty');
-                } else {
-                    setUser(null);
-                    console.error("Error fetching cart:", err);
-                    navigate('/');
-                }
+                if (!res.ok) throw new Error('Failed to fetch games');
+                const data = await res.json();
+                setGames(data);
+            } catch (error) {
+                console.error("Error Loading Games:", error)
             }
         };
-        fetchUser();
-    }, [navigate]);
+        fetchGames();
+    }, [gameIds]);
 
     const handleRemove = async (id) => {
-        //make api call to remove
-        console.log(id, "removed from cart")
+        let accessToken = null;
+        try {
+            const refreshRes = await fetch('/api/auth/refresh', {
+                method: 'POST',
+            });
+            if (!refreshRes.ok) throw new Error('Failed to refresh token');
+            const { accessToken: newAccessToken } = await refreshRes.json();
+            accessToken = newAccessToken;
+        } catch (error) {
+            console.error("Error refreshing token:", error);
+        }
+
+        try {
+            const response = await fetch(`/api/users/${props.user._id}/cart/`, {
+                method: 'DELETE',
+                body: JSON.stringify({ gameId: id }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                }
+            });
+            if (response.ok) {
+                const result = await response.json();
+                // Expecting result.cart to be the updated cart array
+                if (Array.isArray(result.userCart)) {
+                    setGameIds(result.userCart);
+                }
+            }
+        } catch (error) {
+            console.error("Error removing item from cart:", error);
+        }
     }
 
-    if (!user) return null;
-
-    return (<>
-        <h1>Cart</h1>
-        <table className="tbl">
-            <tbody>
-                <tr>
-                    <th>Game</th>
-                    <th>Developer</th>
-                    <th>Publisher</th>
-                    <th>Price</th>
-                    <th></th>
-                </tr>
-                {games.map((game) => (
-                    <CartItem key={game.game_id} data={game} handleRemove={handleRemove}/>
-                ))}
-            </tbody>
-        </table>
-        <Link to="/checkout"> 
-            <button >Proceed to Checkout</button>
-        </Link>
-    </>);
+    if (!props.user) return null;
+    return (
+        <>
+            <h1>Cart</h1>
+            {gameIds.length === 0 ? (
+                <div>No items in cart</div>
+            ) : (
+                <>
+                    <table className="tbl">
+                        <tbody>
+                            <tr>
+                                <th>Game</th>
+                                <th>Developer</th>
+                                <th>Publisher</th>
+                                <th>Price</th>
+                                <th></th>
+                            </tr>
+                            {Array.isArray(games) ? (
+                                games.map((game) => (
+                                    <CartItem key={game._id} data={game} handleRemove={handleRemove}/>
+                                ))
+                            ) : null}
+                        </tbody>
+                    </table>
+                    <Link to="/checkout"> 
+                        <button >Proceed to Checkout</button>
+                    </Link>
+                </>
+            )}
+        </>
+    );
 };
 
 
 
-export default Cart
+export default Cart;

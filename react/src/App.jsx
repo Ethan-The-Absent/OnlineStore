@@ -46,7 +46,23 @@ function App() {
         });
         if (!userRes.ok) throw new Error('Failed to fetch user');
         const userData = await userRes.json();
-        setUser(userData);
+
+        // Fetch games in cart
+        let cart = [];
+        if (userData && userData._id) {
+          const cartRes = await fetch(`/api/users/${userData._id}/cart`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (cartRes.ok) {
+            cart = await cartRes.json();
+          }
+        }
+
+        setUser({ ...userData, cart });
       } catch (err) {
         setUser(null);
       }
@@ -57,7 +73,7 @@ function App() {
   return (
     <>
       <Router>
-        <nav className="navbar navbar-expand-lg bg-body-tertiary">
+        <nav className="navbar navbar-expand-md bg-body-tertiary">
           <div className="container-fluid">
             <Link className="navbar-brand d-flex align-items-center" to="/">
               <img src="/UmbrellaGames.png" alt="Umbrella Games Logo" style={{ height: '40px', marginRight: '10px' }} />
@@ -92,7 +108,7 @@ function App() {
           <Routes>
             <Route exact path="/" element={<Home />} />
             <Route path='account' element={<Account user={user}/>}/>
-            <Route path="game/:game_id" element={<Game/>}/>
+            <Route path="game/:game_id" element={<Game user={user}/>}/>
             <Route path="cart" element={<Cart user={user}/>}/>
             <Route path="checkout" element={<Checkout/>}/>
             <Route path="about" element={<About/>}/>

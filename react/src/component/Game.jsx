@@ -9,13 +9,6 @@ const Game = (props) => {
     const star0 = '☆'
     const star1 = '★'
 
-    const [userKey, setUserKey] = useState(()=> {
-        return localStorage.getItem('userKey') || '';
-      });
-    
-      useEffect(() => {
-        localStorage.setItem('userKey', userKey);
-      }, [userKey]);
     
     const { game_id } = useParams();
     const [game, setGame] = useState(null);
@@ -56,6 +49,40 @@ const Game = (props) => {
         sortedtags = tags.sort((a, b) => b[1] - a[1]);
     }
 
+    // Add to cart handler
+    const handleAddToCart = async () => {
+        if (!props.user || !game) return;
+        let accessToken = null;
+        try {
+            // Get new access token using refresh token in cookies
+            const refreshRes = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include',
+            });
+            if (!refreshRes.ok) throw new Error('Failed to refresh token');
+            const refreshData = await refreshRes.json();
+            accessToken = refreshData.accessToken;
+        } catch (err) {
+            alert('Error refreshing token');
+            return;
+        }
+
+        try {
+            // Make add to cart API call
+            const res = await fetch(`/api/users/${props.user._id}/cart`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ gameId: game._id })
+            });
+            if (!res.ok) throw new Error('Failed to add to cart');
+        } catch (err) {
+            console.error("Error adding to cart:", err);
+        }
+    };
+
     return (
         game ? 
         <>
@@ -74,8 +101,8 @@ const Game = (props) => {
                 <span> ${game.price/100}</span>
             </>
            ) : (<span>${game.price/100}</span>) }</h5>
-           {userKey ? (
-           <button>
+           {props.user ? (
+           <button onClick={handleAddToCart}>
             Add To Cart
            </button>) :
            (<Link to="/account"><button>

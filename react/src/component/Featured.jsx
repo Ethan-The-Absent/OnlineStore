@@ -18,7 +18,7 @@ const Featured = (props) =>
           }}
         >
           {props.games.map((game) => (
-            <GameTile key={game._id} data={game} />
+            <GameTile className="featured-card" key={game._id} data={game}/>
           ))}
         </div>
       </div>
