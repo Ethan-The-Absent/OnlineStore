@@ -252,7 +252,7 @@ router.get('/:userId/purchases', verifyToken, isOwnerOrAdmin, async (req, res) =
 });
 
 /**
- * @route GET /games/:gameId/predict
+ * @route GET /users/:userId/predict
  * @desc Get game recommendations based on another game 
  * @access Private (owner or admin)
  */
@@ -291,7 +291,7 @@ router.get('/:userId/predict', verifyToken, isOwnerOrAdmin, async (req, res) => 
       return res.status(400).json({ message: 'No purchases or id to predict from' });
     }
 
-    const response = Array.from(await Predictor.get("/model/predict_by_index", {"index": predictIds[0], "excluded_ids": exclusions, "n": parsedNumPred}))
+    const response = Array.from(await Predictor.get("/model/predict_by_index", {"indices": predictIds, "excluded_ids": exclusions, "n": parsedNumPred}))
 
     return res.status(200).json(response);
   } catch (error) {
