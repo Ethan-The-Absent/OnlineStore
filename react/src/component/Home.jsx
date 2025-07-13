@@ -130,7 +130,7 @@ const Home = (props) => {
                     </div>
                 </div>
                 
-                <div className="card-container">
+                <div className="card-container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem' }}>
                     {games.map((game) => (
                         <GameTile key={game._id} data={game}/>
                     ))}

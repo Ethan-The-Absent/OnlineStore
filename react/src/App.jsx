@@ -23,6 +23,8 @@ import About from './component/About';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [refresh, setRefresh] = useState(0);
+  const incrementRefresh = () => setRefresh((r) => r + 1);
 
   useEffect(() => {
     // Fetch access token using refreshToken cookie
@@ -68,7 +70,7 @@ function App() {
       }
     };
     fetchUser();
-  }, []);
+  }, [refresh]);
 
   return (
     <>
@@ -94,11 +96,13 @@ function App() {
                     {user ? `${user.username}` : 'Login'}
                   </Link>
                 </li>
-                {user ? (<li className="nav-item dropdown">
-                  <Link className="nav-link" to="/cart">
-                    Cart
-                  </Link>
-                </li>) : <></>}
+                {user ? (
+                  <li className="nav-item dropdown">
+                    <Link className="nav-link" to="/cart">
+                      Cart{Array.isArray(user.cart) && user.cart.length > 0 ? ` (${user.cart.length})` : ''}
+                    </Link>
+                  </li>
+                ) : <></>}
               </ul>
               {/* <Search setData={setData} /> */}
             </div>
@@ -108,8 +112,8 @@ function App() {
           <Routes>
             <Route exact path="/" element={<Home />} />
             <Route path='account' element={<Account user={user}/>}/>
-            <Route path="game/:game_id" element={<Game user={user}/>}/>
-            <Route path="cart" element={<Cart user={user}/>}/>
+            <Route path="game/:game_id" element={<Game user={user} incrementRefresh={incrementRefresh}/>}/>
+            <Route path="cart" element={<Cart user={user} incrementRefresh={incrementRefresh}/>}/>
             <Route path="checkout" element={<Checkout/>}/>
             <Route path="about" element={<About/>}/>
           </Routes>

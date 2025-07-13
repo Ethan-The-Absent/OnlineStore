@@ -70,10 +70,10 @@ const Cart = (props) => {
             });
             if (response.ok) {
                 const result = await response.json();
-                // Expecting result.cart to be the updated cart array
                 if (Array.isArray(result.userCart)) {
                     setGameIds(result.userCart);
                 }
+                if (props.incrementRefresh) props.incrementRefresh();
             }
         } catch (error) {
             console.error("Error removing item from cart:", error);
@@ -104,6 +104,13 @@ const Cart = (props) => {
                             ) : null}
                         </tbody>
                     </table>
+                    {/* Total price below table */}
+                    <div style={{marginTop: '1em', fontWeight: 'bold'}}>
+                        Total: $
+                        {Array.isArray(games)
+                            ? (games.reduce((sum, game) => sum + (game.price || 0), 0) / 100).toFixed(2)
+                            : '0.00'}
+                    </div>
                     <Link to="/checkout"> 
                         <button >Proceed to Checkout</button>
                     </Link>

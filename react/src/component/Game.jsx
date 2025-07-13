@@ -78,6 +78,8 @@ const Game = (props) => {
                 body: JSON.stringify({ gameId: game._id })
             });
             if (!res.ok) throw new Error('Failed to add to cart');
+            // Targeted refresh after successful add
+            if (props.incrementRefresh) props.incrementRefresh();
         } catch (err) {
             console.error("Error adding to cart:", err);
         }
