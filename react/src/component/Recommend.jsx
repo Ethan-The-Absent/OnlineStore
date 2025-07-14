@@ -70,7 +70,7 @@ const Recommended = (props) => {
     
     return (
       <div>
-        <h1>Reccomended Games</h1>
+        <h1>Recommended Games</h1>
         <p>Based on your purchases</p>
         {loading && <div>Loading...</div>}
         {error && <div className="alert alert-danger">{error}</div>}

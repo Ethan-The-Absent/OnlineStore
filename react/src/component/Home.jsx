@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useState } from 'react'
 import GameTile from "./GameTile"
 import Featured from "./Featured";
-import Reccomended from './Reccomend';
+import Recommended from './Recommend';
 
 
 
@@ -68,10 +68,10 @@ const Home = (props) => {
             <Featured games={featuredGames} user={props.user}/>
              { props.user?
             (props.user.purchases.length > 0? 
-                <Reccomended user={props.user}/>:
-                <div className="alert alert-info">Purchace a Game for Reccomendations</div>
+                <Recommended user={props.user}/>:
+                <div className="alert alert-info">Purchace a Game for Recommendations</div>
             ) : 
-            <div className="alert alert-info">Log in for Personalized Reccomendations</div>
+            <div className="alert alert-info">Log in for Personalized Recommendations</div>
             }
             
             <div>
