@@ -66,13 +66,13 @@ const Home = (props) => {
     return (
         <>
             <Featured games={featuredGames} user={props.user}/>
-            {/* { props.user?
+             { props.user?
             (props.user.purchases.length > 0? 
                 <Reccomended user={props.user}/>:
                 <div className="alert alert-info">Purchace a Game for Reccomendations</div>
-            ) : */}
+            ) : 
             <div className="alert alert-info">Log in for Personalized Reccomendations</div>
-            {/* } */}
+            }
             
             <div>
                 {/* Paging controls */}

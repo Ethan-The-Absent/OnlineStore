@@ -4,6 +4,7 @@ import GameTile from './GameTile';
 const Recommended = (props) => {
 
     const [games, setGames] = React.useState([]);
+    const [gameIds, setGameIds] = React.useState([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState(null);
 
@@ -28,7 +29,7 @@ const Recommended = (props) => {
                     setLoading(false);
                     return;
                 }
-                const res = await fetch(`/api/users/${props.user._id}/predict`, {
+                const res = await fetch(`/api/users/${props.user._id}/predict?numPred=4`, {
                   method: 'GET',  
                   headers: {
                         'Authorization': `Bearer ${accessToken}`,
@@ -37,7 +38,7 @@ const Recommended = (props) => {
                 });
                 if (!res.ok) throw new Error('Failed to fetch recommendations');
                 const data = await res.json();
-                setGames(data);
+                setGameIds(data);
             } catch (err) {
                 setError(err.message || 'An error occurred');
             } finally {
@@ -47,6 +48,26 @@ const Recommended = (props) => {
         fetchRecommended();
     }, [props.user]);
 
+    React.useEffect(() => {
+      const fetchGames = async () => {
+        if (gameIds.length === 0) {
+          setGames([]);
+          return;
+        }
+        try {
+          const res = await fetch(`/api/games?ids=${gameIds.toString()}`, {
+            method: 'GET'
+          });
+          if (!res.ok) throw new Error('Failed to fetch games');
+          const data = await res.json();
+          setGames(data);
+        } catch (error) {
+          setError(error.message || 'An error occurred while fetching games');
+        }
+      };
+      fetchGames();
+    }, [gameIds])
+    
     return (
       <div>
         <h1>Reccomended Games</h1>

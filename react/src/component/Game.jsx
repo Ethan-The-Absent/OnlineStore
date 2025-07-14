@@ -95,7 +95,6 @@ const Game = (props) => {
                 {sortedtags.map((tag) => (
                 <span className="tag-bubble" key={tag}>{tag[0]}</span>))}
             </div>
-            
             <h5>{game.discount ? (
             <>  
                 <span className="discount">-{Math.floor(game.discount)}% </span>
@@ -123,7 +122,15 @@ const Game = (props) => {
             <span className="tt">{Math.round(rating * 100)}% positive</span>
             </div>
             <div className="faint-text">{ratings} ratings</div>
+            <div className="mt-3">
+                <div className="description-grid" style={{ display: 'flex', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+                    <div className="description-item card">Concurent Players: {game.ccu}</div>
+                    <div className="description-item card">hello</div>
+                    <div className="description-item card">hello</div>
+                    <div className="description-item card">hello</div>
+                </div>
             </div>
+        </div>
         </>: 
         <>
         <h3>Game Not Found</h3>
