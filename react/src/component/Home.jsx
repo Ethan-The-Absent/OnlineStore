@@ -13,14 +13,13 @@ const Home = (props) => {
     const [asc, setAsc] = useState(0);
 
     const [featuredGames, setFeaturedGames] = useState([]);
-    const [reccomendedGames, setReccomendedGames] = useState([]);
     const [games, setGames] = useState([]);
 
     const [pagination, setPagination] = useState({})
 
 
-    const sortings = ['_id', 'name', 'price', 'discount', 'initialPrice', 'positive', 'genre', 'developer'];
-    const sortingsString = ['Game ID', 'Name', 'Price', 'Discount', 'Initial Price', 'Positive Reviews', 'Genre', 'Developer'];
+    const sortings = ['_id', 'name', 'price', 'discount', 'positive', 'genre', 'developer'];
+    const sortingsString = ['Game ID', 'Name', 'Price', 'Discount', 'Positive Reviews', 'Genre', 'Developer'];
 
     useEffect(() => {
         // Get Data
@@ -64,8 +63,15 @@ const Home = (props) => {
 
     return (
         <>
-            <Featured games={featuredGames}/>
-            <Reccomended games={reccomendedGames}/>
+            <Featured games={featuredGames} user={props.user}/>
+            { props.user?
+            (props.user.purchases.length > 0? 
+                <Reccomended user={props.user}/>:
+                <div className="alert alert-info">Purchace a Game for Reccomendations</div>
+            ) :
+            <div className="alert alert-info">Log in for Personalized Reccomendations</div>
+            }
+            
             <div>
                 {/* Paging controls */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
@@ -132,7 +138,7 @@ const Home = (props) => {
                 
                 <div className="card-container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem' }}>
                     {games.map((game) => (
-                        <GameTile key={game._id} data={game}/>
+                        <GameTile key={game._id} data={game} user={props.user}/>
                     ))}
                 </div>
             </div>

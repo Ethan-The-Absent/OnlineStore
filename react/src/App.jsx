@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+
+import React, { useEffect, useState } from 'react';
 import './App.css'
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.js";
@@ -6,7 +7,8 @@ import {
   BrowserRouter as Router,
   Route,
   Routes,
-  Link
+  Link,
+  useNavigate
 } from "react-router-dom"
 
 
@@ -17,6 +19,8 @@ import Account from './component/Account';
 import Cart from './component/Cart';
 import Checkout from './component/Checkout';
 import About from './component/About';
+import Search from './component/Search';
+import NavbarSearch from './component/NavbarSearch';
 
 
 
@@ -38,7 +42,7 @@ function App() {
         if (!refreshRes.ok) throw new Error('Failed to refresh token');
         const { accessToken } = await refreshRes.json();
 
-        // Send access token to get user data
+        // Send access token to get user id
         const userRes = await fetch('/api/auth/me', {
           method: 'GET',
           headers: {
@@ -46,12 +50,12 @@ function App() {
             'Content-Type': 'application/json',
           },
         });
-        if (!userRes.ok) throw new Error('Failed to fetch user');
+        if (!userRes.ok) throw new Error('Failed to fetch ID');
         const userData = await userRes.json();
-
-        // Fetch games in cart
+        // Fetch cart and purchases and add to user state var
         let cart = [];
-        if (userData && userData._id) {
+        let purchases = [];
+        if (userData._id) {
           const cartRes = await fetch(`/api/users/${userData._id}/cart`, {
             method: 'GET',
             headers: {
@@ -62,9 +66,19 @@ function App() {
           if (cartRes.ok) {
             cart = await cartRes.json();
           }
+          const purchasesRes = await fetch(`/api/users/${userData._id}/purchases`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (purchasesRes.ok) {
+            purchases = await purchasesRes.json();
+          }
         }
-
-        setUser({ ...userData, cart });
+        setUser({ ...userData, cart, purchases });
+        
       } catch (err) {
         setUser(null);
       }
@@ -75,7 +89,7 @@ function App() {
   return (
     <>
       <Router>
-        <nav className="navbar navbar-expand-md bg-body-tertiary">
+        <nav className="navbar navbar-expand-md bg-body-tertiary" >
           <div className="container-fluid">
             <Link className="navbar-brand d-flex align-items-center" to="/">
               <img src="/UmbrellaGames.png" alt="Umbrella Games Logo" style={{ height: '40px', marginRight: '10px' }} />
@@ -104,23 +118,23 @@ function App() {
                   </li>
                 ) : <></>}
               </ul>
-              {/* <Search setData={setData} /> */}
+              <NavbarSearch />
             </div>
           </div>
         </nav>
-        <main>
+        <main style={{ marginTop: 0, paddingTop: 0 }}>
           <Routes>
-            <Route exact path="/" element={<Home />} />
+            <Route exact path="/" element={<Home user={user}/>} />
             <Route path='account' element={<Account user={user}/>}/>
             <Route path="game/:game_id" element={<Game user={user} incrementRefresh={incrementRefresh}/>}/>
             <Route path="cart" element={<Cart user={user} incrementRefresh={incrementRefresh}/>}/>
             <Route path="checkout" element={<Checkout/>}/>
             <Route path="about" element={<About/>}/>
+            <Route path="search" element={<Search user={user}/>}/>
           </Routes>
         </main>
       </Router>
-    </>
-  );
+    </>)
 }
 
-export default App
+export default App;

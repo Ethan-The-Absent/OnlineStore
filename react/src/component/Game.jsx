@@ -98,15 +98,22 @@ const Game = (props) => {
             
             <h5>{game.discount ? (
             <>  
-                <span className="discount">-{Math.floor(game.discount * 100)}% </span>
+                <span className="discount">-{Math.floor(game.discount)}% </span>
                 <span className="faint-text" style={{ textDecoration: 'line-through'}}>${game.initialPrice/100}</span>
                 <span> ${game.price/100}</span>
             </>
            ) : (<span>${game.price/100}</span>) }</h5>
            {props.user ? (
-           <button onClick={handleAddToCart}>
-            Add To Cart
-           </button>) :
+                Array.isArray(props.user.purchases) && props.user.purchases.includes(game._id) ? (
+                    <span className="badge bg-success">Owned</span>
+                ) : Array.isArray(props.user.cart) && props.user.cart.includes(game._id) ? (
+                    <span className="badge bg-info">Added to Cart</span>
+                ) : (
+                    <button onClick={handleAddToCart}>
+                        Add To Cart
+                    </button>
+                )
+            ) :
            (<Link to="/account"><button>
             Login to add to Cart
            </button></Link>)}

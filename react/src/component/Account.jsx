@@ -106,6 +106,38 @@ const Account = (props) => {
         }
     };
 
+    // Get Purcheses if Logged In
+    const [gameIds, setGameIds] = React.useState([]);
+    const [games, setGames] = React.useState([]);
+    
+        React.useEffect(() => {
+            if (props.user && Array.isArray(props.user.purchases)) {
+                setGameIds(props.user.purchases);
+            }
+        }, [props.user]);
+    
+        
+        React.useEffect(() => {
+            if (gameIds.length === 0) {
+                setGames([]);
+                return;
+            }
+            const fetchGames = async () => {
+                try {
+                    const res = await fetch(`/api/games?ids=${gameIds.toString()}`, {
+                        method: 'GET'
+                    });
+                    if (!res.ok) throw new Error('Failed to fetch games');
+                    const data = await res.json();
+                    setGames(data);
+                } catch (error) {
+                    console.error("Error Loading Games:", error)
+                }
+            };
+            fetchGames();
+        }, [gameIds]);
+
+
     // If user is present in props, show user info and buttons
     if (props.user && props.user.username) {
         return (
@@ -114,6 +146,11 @@ const Account = (props) => {
                 <div className="mt-4">
                     <button className="btn btn-success me-2" onClick={() => navigate('/cart')}>Go to Cart</button>
                     <button className="btn btn-danger" onClick={handleLogout}>Log Out</button>
+                    { games.length > 0 ? <div>
+                        <h4 className="mt-3">Your Games:</h4>
+                        { games.map((game) => (
+                            <div key={game._id} className="card">{game.name}</div>))}
+                    </div> : <div>No Purchaced Games</div>}
                 </div>
             </div>
         );
