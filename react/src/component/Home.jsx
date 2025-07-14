@@ -10,7 +10,7 @@ const Home = (props) => {
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [sort, setSort] = useState(0);
-    const [asc, setAsc] = useState(0);
+    const [asc, setAsc] = useState(1);
 
     const [featuredGames, setFeaturedGames] = useState([]);
     const [games, setGames] = useState([]);
@@ -27,7 +27,7 @@ const Home = (props) => {
             const queryParams = new URLSearchParams(
                 {"page": page,
                 "pageSize": pageSize,
-                "sort": sortings[sort],
+                "sortField": sortings[sort],
                 "sortOrder": asc})
         try {
             const res = await fetch(`/api/games?${queryParams.toString()}`, {
@@ -41,6 +41,10 @@ const Home = (props) => {
             console.error("Error Loading Games:", error)
         }};
 
+        fetchGames();
+    }, [page, pageSize, sort, asc])
+
+    useEffect(() => {
         const fetchFeatured = async () => {
             const queryParams = new URLSearchParams({"page": 0,
                             "pageSize": 10,
@@ -56,21 +60,19 @@ const Home = (props) => {
             }
         }
 
-
-        fetchGames();
         fetchFeatured();
-    }, [page])
+    }, []);
 
     return (
         <>
             <Featured games={featuredGames} user={props.user}/>
-            { props.user?
+            {/* { props.user?
             (props.user.purchases.length > 0? 
                 <Reccomended user={props.user}/>:
                 <div className="alert alert-info">Purchace a Game for Reccomendations</div>
-            ) :
+            ) : */}
             <div className="alert alert-info">Log in for Personalized Reccomendations</div>
-            }
+            {/* } */}
             
             <div>
                 {/* Paging controls */}
@@ -116,7 +118,7 @@ const Home = (props) => {
                             id="asc-checkbox"
                             type="checkbox"
                             checked={asc === 1}
-                            onChange={e => { setAsc(e.target.checked ? 1 : 0); setPage(0); }}
+                            onChange={e => { setAsc(e.target.checked ? 1 : -1); setPage(0); }}
                         />
                     </div>
                     {/* Page size dropdown */}
@@ -129,7 +131,7 @@ const Home = (props) => {
                             className="form-select"
                             style={{ display: 'inline-block', width: 'auto' }}
                         >
-                            {[10, 30, 50, 100, 500].map(size => (
+                            {[10, 30, 50, 100].map(size => (
                                 <option key={size} value={size}>{size}</option>
                             ))}
                         </select>
