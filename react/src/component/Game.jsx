@@ -74,7 +74,7 @@ const Game = (props) => {
                 }
             };
             fetchRecommended();
-        }, [game_id]);
+        }, [game_id, props.user]);
     
         React.useEffect(() => {
           const fetchGames = async () => {
