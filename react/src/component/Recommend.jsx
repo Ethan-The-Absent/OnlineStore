@@ -25,7 +25,7 @@ const Recommended = (props) => {
                     const refreshData = await refreshRes.json();
                     accessToken = refreshData.accessToken;
                 } catch (err) {
-                    setError('Error refreshing token');
+                    setError(null);
                     setLoading(false);
                     return;
                 }

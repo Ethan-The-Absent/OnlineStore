@@ -57,7 +57,7 @@ const Game = (props) => {
                         setLoading(false);
                         return;
                     }
-                    const res = await fetch(`/api/users/${props.user._id}/predict?numPred=4`, {
+                    const res = await fetch(`/api/users/${props.user._id}/predict?numPred=4&gameId=${game_id}`, {
                       method: 'GET',  
                       headers: {
                             'Authorization': `Bearer ${accessToken}`,

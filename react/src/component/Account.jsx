@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const API = '/api/auth/';
 
@@ -148,8 +149,12 @@ const Account = (props) => {
                     <button className="btn btn-danger" onClick={handleLogout}>Log Out</button>
                     { games.length > 0 ? <div>
                         <h4 className="mt-3">Your Games:</h4>
+                        <div style={{justifySelf:'center', textDecoration:'none'}}>
                         { games.map((game) => (
-                            <div key={game._id} className="card">{game.name}</div>))}
+                            <Link key={game._id} to={`/game/${game._id}`}>
+                                <div className="card">{game.name}</div>
+                            </Link>))}
+                        </div>
                     </div> : <div>No Purchaced Games</div>}
                 </div>
             </div>
