@@ -43,6 +43,13 @@ class Game {
     return game ? new Game(game) : null;
   }
 
+  // Find list of games by id
+  static async findManyIds(ids) {
+    const collection = this.getCollection();
+    const games = await collection.find({ _id: { $in: ids} }).toArray();
+    return games.map((game) => new Game(game));
+  }
+
   // Find game by name
   static async findByName(name) {
     const collection = this.getCollection();

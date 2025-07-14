@@ -59,8 +59,8 @@ router.post('/logout', async (req, res) => {
 // Get current user route
 router.get('/me', verifyToken, (req, res) => {
   try {
-    const { id, username, role, lastLogin } = req.user;
-    return res.json({ id, username, role, lastLogin });
+    const { _id, username, role, lastLogin } = req.user;
+    return res.json({ _id, username, role, lastLogin });
   } catch (error) {
     handleError(error, res);
   }
