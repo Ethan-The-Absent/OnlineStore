@@ -1,0 +1,23 @@
+df tags @ iloc 5: '{\'Action\': 5448, \'FPS\': 4862, \'Multiplayer\': 3414, \'Shooter\': 3369, \'Classic\': 2802, \'Team-Based\': 1879, \'First-Person\': 1717, \'Competitive\': 1618, \'Tactical\': 1357, "1990\'s": 1212, \'e-sports\': 1202, \'PvP\': 893, \'Old School\': 783, \'Military\': 638, \'Strategy\': 622, \'Survival\': 308, \'Score Attack\': 295, \'1980s\': 273, \'Assassin\': 231, \'Nostalgia\': 152}'
+after normalizing: {'action': 0.4016393442622951,
+ 'fps': 0.08948087431693989,
+ 'multiplayer': 0.07513661202185792,
+ 'classic': 0.06420765027322405,
+ 'first-person': 0.056010928961748634,
+ 'sci-fi': 0.03825136612021858,
+ 'shooter': 0.03756830601092896,
+ 'space': 0.030737704918032786,
+ 'cyberpunk': 0.025956284153005466,
+ 'memes': 0.022540983606557378,
+ 'psychological horror': 0.022540983606557378,
+ 'platformer': 0.01980874316939891,
+ 'conspiracy': 0.01912568306010929,
+ '3d': 0.018442622950819672,
+ 'old school': 0.017759562841530054,
+ 'retro': 0.017759562841530054,
+ 'cult classic': 0.014344262295081968,
+ 'competitive': 0.01366120218579235,
+ 'sports': 0.00819672131147541,
+ 'great soundtrack': 0.006830601092896175}
+
+ 
